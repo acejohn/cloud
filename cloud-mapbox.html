@@ -1,0 +1,79 @@
+<script>
+//GET Device list data
+     $.ajax({
+        url: '@Url.Action("GetDeviceListLatLong", "Device", new { Area = "ClientAdmin", clientId = "" })',
+        type: "GET",
+        data: {},
+         success: function (data) {
+            //initMap(data)
+              initMapLeaflet(data)
+        },
+        error: function (error) { }
+    });
+
+    //leaflet.js
+    function initMapLeaflet(x) {
+
+        var maplocation = x;
+
+        console.log(maplocation);
+
+        var map = L.map('map', {
+            center: [10.0, 5.0],
+            maxZoom: 20,
+            zoom: 2
+        });
+
+        L.tileLayer('https://api.mapbox.com/styles/v1/acejohn8/ck1g1jfty4dwi1cld4uvazm0x/tiles/256/{z}/{x}/{y}@@2x?access_token=pk.eyJ1IjoiYWNlam9objgiLCJhIjoiY2p4dm9leHhwMDA4cTNjcXg4cmJ5NWRtOCJ9.A0JpHY1zmbbUd-ttqeZ-8g', {
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+            //accessToken: 'pk.eyJ1IjoiYWNlam9objgiLCJhIjoiY2p4dm9leHhwMDA4cTNjcXg4cmJ5NWRtOCJ9.A0JpHY1zmbbUd-ttqeZ-8g',
+            //style: 'mapbox://styles/acejohn8/ck1g0ammp01ng1cp6e3ga524z',
+            //id: 'mapbox.streets',
+            maxZoom: 20
+        }).addTo(map);
+
+        var myIcon = L.icon({
+            iconUrl: '/Content/images/pin24.png',
+            iconRetinaUrl: '/Content/images/pin48.png',
+            iconSize: [29, 24],
+            iconAnchor: [9, 21],
+            popupAnchor: [0, -14]
+        });
+
+        var markerClusters = L.markerClusterGroup();
+
+        for (var i = 0; i < maplocation.length; ++i) {
+
+            var obj = maplocation[i];
+
+            //heartbeat val
+            var status = true;
+
+            var defaultLink = "@Url.Action("GetConfiguration", "Configuration", new { Area = "ClientAdmin", clientId = Session["CurrentClientId"], accountId = "/", deviceId = "/", deviceTypeName = "/" })";
+            var deviceUrl = obj.AccountId + "/" + obj.DeviceId + "/" + obj.DeviceTypeName;
+
+            if (status == true) {
+                var blink = '<i class="fa fa-circle active Blink-mapStat"></i><span style="margin-left: 6px;">Active</span> <hr>';
+            } else {
+                var blink = '<i class="fa fa-circle inactive" style="color: #9E9E9E"></i><span style="color:#9E9E9E;margin-left: 6px;">Inactive</span><hr>';
+            }
+
+            var popup = '<span><a id="configureBtn" onclick="test()" href=" ' + defaultLink + deviceUrl + '" data-toggle="tooltip" data-placement="top" title="Go to device configuration"><img class="device-img" src=" ' + obj.DevicePic + ' "></a></span>' + blink +
+                '<span>Country: </span>' + obj.Country +
+                '<br/><span>Device Type: </span>' + obj.DeviceTypeName +
+                '<br/><span>Device Name: </span>' + obj.DeviceName;
+
+            if (obj.Latitude !== null && obj.Longitude !== null) {
+                var m = L.marker([obj.Latitude, obj.Longitude], { icon: myIcon }).bindPopup(popup);            
+                markerClusters.addLayer(m);
+            
+                m.on('mouseover', function (e) {
+                    this.openPopup(); 
+                });  
+            }
+        }
+ 
+        map.addLayer(markerClusters);
+        map.fitBounds(markerClusters);
+    }
+</script>

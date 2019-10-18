@@ -1,0 +1,79 @@
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBXcKWLGTyP4MYRqaMNkiwwCsOWYS-406w&callback=initMap">
+</script>
+
+<script>
+/* GOOGLE MAP */
+     $.ajax({
+        url: '@Url.Action("GetDeviceListLatLong", "Device", new { Area = "ClientAdmin", clientId = "" })',
+        type: "GET",
+        data: {},
+         success: function (data) {
+            initMap(data)
+        },
+        error: function (error) { }
+    });
+
+    function initMap(x) { 
+
+        var maplocation = x;
+        var InforObj = [];
+        console.log(maplocation);
+
+        window.map = new google.maps.Map(document.getElementById('map'), {
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        });
+
+        var infowindow = new google.maps.InfoWindow();
+
+        var bounds = new google.maps.LatLngBounds();
+
+        for (i = 0; i < maplocation.length; i++) {
+
+            var obj = maplocation[i];
+
+            var icon = {
+                url: obj.DevicePic, // url
+                scaledSize: new google.maps.Size(50, 50) // scaled size
+            }
+
+            var contentString = '<div id="content"><center><h3 style="color:#000;">' + obj.Country +
+                '</h3><p>' + obj.DeviceTypeName + '</p></center></div>';
+
+            marker = new google.maps.Marker({
+                position: new google.maps.LatLng(obj.Latitude, obj.Longitude),
+                //icon: icon, //set image icon per device
+                map: map
+            });
+
+            const infowindow = new google.maps.InfoWindow({
+                content: contentString,
+                maxWidth: 200
+            });
+
+            bounds.extend(marker.position);
+
+            google.maps.event.addListener(marker, 'click', (function (marker, i) {
+                return function () {
+                    closeOtherInfo();
+                    infowindow.open(map, marker);
+                    InforObj[0] = infowindow;
+                }
+            })(marker, i));          
+        }
+
+        function closeOtherInfo() {
+            if (InforObj.length > 0) {             
+                InforObj[0].set("marker", null);           
+                InforObj[0].close();             
+                InforObj.length = 0;
+            }
+        }
+
+        map.fitBounds(bounds);
+
+        var listener = google.maps.event.addListener(map, "idle", function () {
+            map.setZoom(3);
+            google.maps.event.removeListener(listener);
+        });
+    }
+</script>
